@@ -3,52 +3,53 @@ import os
 import pickle
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "spam.csv")
-TEXT_COL = "text"
-LABEL_COL = "label"
 
-# If spam.csv is missing, create a small sample dataset for testing
+# Load dataset
 if not os.path.exists(CSV_PATH):
-    print(f"[INFO] {CSV_PATH} not found — creating a small sample dataset for testing.")
-    sample = [
-        {"text": "Free entry! You won a prize. Click here", "label": "spam"},
-        {"text": "Call me when you are free", "label": "ham"},
-        {"text": "Congratulations! Claim your free gift now", "label": "spam"},
-        {"text": "Are we meeting tomorrow for lunch?", "label": "ham"},
-        {"text": "Win cash now by entering the contest", "label": "spam"},
-        {"text": "Please review the attached file", "label": "ham"},
-    ]
-    df = pd.DataFrame(sample)
-    df.to_csv(CSV_PATH, index=False)
-    print(f"[INFO] Sample dataset written to {CSV_PATH}")
+    raise FileNotFoundError("❌ spam.csv not found. Please add real dataset.")
+
+print("[INFO] Loading dataset...")
+df = pd.read_csv(CSV_PATH, encoding='latin-1')
+
+# Fix column names (for real SMS dataset)
+if 'v1' in df.columns and 'v2' in df.columns:
+    df = df[['v1', 'v2']]
+    df.columns = ['label', 'text']
+elif 'label' in df.columns and 'text' in df.columns:
+    df = df[['label', 'text']]
 else:
-    print(f"[INFO] Found dataset at {CSV_PATH}. Loading it...")
-    df = pd.read_csv(CSV_PATH)
+    raise RuntimeError(f"Unexpected columns: {df.columns}")
 
-# Verify columns
-if TEXT_COL not in df.columns or LABEL_COL not in df.columns:
-    raise RuntimeError(f"CSV must contain columns '{TEXT_COL}' and '{LABEL_COL}'. Found: {list(df.columns)}")
+# Clean data
+df['text'] = df['text'].astype(str)
+df = df.dropna()
 
-texts = df[TEXT_COL].astype(str).tolist()
-labels = df[LABEL_COL].tolist()
+texts = df['text']
+labels = df['label']
 
-print("[INFO] Fitting TfidfVectorizer and training MultinomialNB...")
-vec = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
-X = vec.fit_transform(texts)
+print("[INFO] Training model...")
 
-model = MultinomialNB()
+# TF-IDF Vectorizer
+vectorizer = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
+X = vectorizer.fit_transform(texts)
+
+# Logistic Regression model
+model = LogisticRegression(max_iter=1000)
 model.fit(X, labels)
 
+# Save files
 vpath = os.path.join(BASE_DIR, "vectorizer1.pkl")
 mpath = os.path.join(BASE_DIR, "model1.pkl")
 
 with open(vpath, "wb") as f:
-    pickle.dump(vec, f)
+    pickle.dump(vectorizer, f)
+
 with open(mpath, "wb") as f:
     pickle.dump(model, f)
 
-print("[SUCCESS] Saved vectorizer ->", vpath)
-print("[SUCCESS] Saved model ->", mpath)
+print("[SUCCESS] Model trained with real dataset!")
+print("[SUCCESS] vectorizer1.pkl & model1.pkl saved")
