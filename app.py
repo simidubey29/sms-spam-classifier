@@ -1,62 +1,32 @@
 import streamlit as st
 import pickle
 import os
-from utils import get_spam_probability
 
-# -------------------------------
-# Load Model (Render Safe)
-# -------------------------------
-@st.cache_resource
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "model1.pkl")
+VECTORIZER_PATH = os.path.join(BASE_DIR, "vectorizer1.pkl")
+
+# Load model and vectorizer
 def load_model():
-    model_path = os.path.join(os.getcwd(), "model1.pkl")
-    vectorizer_path = os.path.join(os.getcwd(), "vectorizer.pkl")
-
-    model = pickle.load(open(model_path, "rb"))
-    vectorizer = pickle.load(open(vectorizer_path, "rb"))
-
+    if not os.path.exists(MODEL_PATH) or not os.path.exists(VECTORIZER_PATH):
+        import recreate_pkls  # will create vectorizer1.pkl and model1.pkl if missing
+    with open(MODEL_PATH, "rb") as f:
+        model = pickle.load(f)
+    with open(VECTORIZER_PATH, "rb") as f:
+        vectorizer = pickle.load(f)
     return model, vectorizer
 
 model, vectorizer = load_model()
 
-# -------------------------------
-# UI Design
-# -------------------------------
-st.set_page_config(page_title="Spam Classifier", page_icon="📩", layout="centered")
+# Streamlit UI
+st.title("SMS Spam Classifier 🚀")
 
-st.markdown(
-    """
-    <h1 style='text-align: center; color: #4CAF50;'>📩 SMS Spam Detector</h1>
-    <p style='text-align: center;'>AI-powered spam detection system</p>
-    """,
-    unsafe_allow_html=True
-)
+msg = st.text_input("Enter your message here:")
 
-# Input
-message = st.text_area("✉️ Enter your message")
-
-# Button
-if st.button("🚀 Predict"):
-
-    if message.strip() == "":
-        st.warning("⚠️ Please enter a message")
+if st.button("Predict"):
+    if msg.strip() == "":
+        st.warning("Please type a message to classify.")
     else:
-        # Transform
-        vect_msg = vectorizer.transform([message])
-
-        # Prediction
-        prediction = model.predict(vect_msg)[0]
-        prob = get_spam_probability(model, vect_msg)
-
-        # Result
-        if prediction == 1:
-            st.error("🚨 Spam Message Detected")
-        else:
-            st.success("✅ Not Spam (Safe Message)")
-
-        # -------------------------------
-        # Probability Bar 📊
-        # -------------------------------
-        st.markdown("### 📊 Spam Probability")
-        st.progress(int(prob * 100))
-
-        st.write(f"🔎 Confidence: **{prob*100:.2f}% Spam**")
+        X = vectorizer.transform([msg])
+        pred = model.predict(X)[0]
+        st.success(f"Prediction: **{pred.upper()}**")

@@ -10,7 +10,7 @@ CSV_PATH = os.path.join(BASE_DIR, "spam.csv")
 TEXT_COL = "text"
 LABEL_COL = "label"
 
-# If spam.csv missing, create a small sample dataset for testing
+# If spam.csv is missing, create a small sample dataset for testing
 if not os.path.exists(CSV_PATH):
     print(f"[INFO] {CSV_PATH} not found — creating a small sample dataset for testing.")
     sample = [
@@ -36,7 +36,7 @@ texts = df[TEXT_COL].astype(str).tolist()
 labels = df[LABEL_COL].tolist()
 
 print("[INFO] Fitting TfidfVectorizer and training MultinomialNB...")
-vec = TfidfVectorizer(max_features=5000, ngram_range=(1,2))
+vec = TfidfVectorizer(max_features=5000, ngram_range=(1, 2))
 X = vec.fit_transform(texts)
 
 model = MultinomialNB()
