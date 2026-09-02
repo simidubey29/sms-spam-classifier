@@ -9,7 +9,6 @@ An end-to-end Machine Learning web application designed to classify SMS messages
 Check out the live deployed application here:  
 👉 **[Click Here to View Live App](https://spam-msg-predictor.streamlit.app/)**
 
-*(Replace `YOUR_DEPLOYED_LINK_HERE` with your Streamlit Community Cloud, Render, or Hugging Face URL)*
 
 ---
 
